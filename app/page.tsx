@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
-import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Sparkles, CalendarDays, UserPlus, Trash2, LayoutDashboard, RotateCcw, Share2, CircleDashed, Trophy, ArrowRightCircle, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Sparkles, CalendarDays, UserPlus, Trash2, LayoutDashboard, RotateCcw, Share2, CircleDashed, Trophy, ArrowRightCircle, Loader2, PaintBucket } from 'lucide-react';
 
 export default function UltimateCalendarApp() {
   const [isMounted, setIsMounted] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date()); // กลับมาใช้เดือนปัจจุบัน
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [isViewerMode, setIsViewerMode] = useState(false);
   const [isSharing, setIsSharing] = useState(false); 
 
@@ -55,7 +55,7 @@ export default function UltimateCalendarApp() {
     }
   }, [scheduleData, members, isMounted, isViewerMode]);
 
-  // --- 🔗 3. Generate Short Share Link ---
+  // --- 🔗 3. Share Link ---
   const generateShareLink = async () => {
     setIsSharing(true);
     try {
@@ -116,6 +116,34 @@ export default function UltimateCalendarApp() {
         newDateData[selectedMember.id] = statusMode; 
       }
       return { ...prev, [dateKey]: newDateData };
+    });
+  };
+
+  // 🚀 ฟีเจอร์ใหม่: เทสีทั้งเดือน (Auto-Fill Month)
+  const fillEntireMonth = () => {
+    if (isViewerMode) return;
+    
+    const monthName = format(currentDate, 'MMMM');
+    const statusText = statusMode === 'notsure' ? 'CLEAR' : statusMode.toUpperCase();
+    
+    if(!confirm(`Are you sure you want to mark ALL days in ${monthName} as ${statusText} for ${selectedMember.name}?`)) return;
+
+    const daysInCurrentMonth = eachDayOfInterval({ start: startOfMonth(currentDate), end: endOfMonth(currentDate) });
+    
+    setScheduleData((prev: any) => {
+      const newData = { ...prev };
+      daysInCurrentMonth.forEach(d => {
+        const dKey = format(d, 'yyyy-MM-dd');
+        const newDateData = { ...(newData[dKey] || {}) };
+        
+        if (statusMode === 'notsure') {
+          delete newDateData[selectedMember.id]; 
+        } else {
+          newDateData[selectedMember.id] = statusMode; 
+        }
+        newData[dKey] = newDateData;
+      });
+      return newData;
     });
   };
 
@@ -212,7 +240,6 @@ export default function UltimateCalendarApp() {
   if (!isMounted) return <div className="min-h-screen bg-[#f1f5f9] flex items-center justify-center text-slate-400 font-bold text-xl tracking-widest">LOADING PLANNER...</div>;
 
   return (
-    // ลด Padding ขอบจอในมือถือให้แคบลง (p-2)
     <div className="min-h-screen bg-[#f1f5f9] p-2 md:p-8 font-sans text-slate-800 select-none">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
         
@@ -222,10 +249,10 @@ export default function UltimateCalendarApp() {
             <div className="bg-white p-5 md:p-6 rounded-[2rem] md:rounded-[2.5rem] shadow-xl border border-white/50 relative">
               
               <div className="flex gap-2 absolute top-5 right-5 md:top-6 md:right-6">
-                <button onClick={generateShareLink} disabled={isSharing} className="text-emerald-500 hover:text-white hover:bg-emerald-500 transition-colors p-2 bg-emerald-50 rounded-full disabled:opacity-50">
+                <button onClick={generateShareLink} disabled={isSharing} className="text-emerald-500 hover:text-white hover:bg-emerald-500 transition-colors p-2 bg-emerald-50 rounded-full disabled:opacity-50" title="Share">
                   {isSharing ? <Loader2 size={16} className="animate-spin md:w-[18px] md:h-[18px]" /> : <Share2 size={16} className="md:w-[18px] md:h-[18px]" />}
                 </button>
-                <button onClick={clearAllData} className="text-slate-300 hover:text-rose-500 transition-colors p-2 bg-slate-50 hover:bg-rose-50 rounded-full">
+                <button onClick={clearAllData} className="text-slate-300 hover:text-rose-500 transition-colors p-2 bg-slate-50 hover:bg-rose-50 rounded-full" title="Clear All">
                   <RotateCcw size={16} className="md:w-[18px] md:h-[18px]" />
                 </button>
               </div>
@@ -271,6 +298,18 @@ export default function UltimateCalendarApp() {
                     <CircleDashed size={16} /> Clear
                   </button>
                 </div>
+                
+                {/* 🚀 ปุ่มเทสีทั้งเดือน */}
+                <div className="mt-3">
+                  <button 
+                    onClick={fillEntireMonth}
+                    className="w-full flex items-center justify-center gap-2 p-2 md:p-3 rounded-xl text-xs md:text-sm transition font-bold bg-slate-900 text-white hover:bg-slate-800 shadow-md active:scale-95"
+                  >
+                    <PaintBucket size={16} /> 
+                    Fill {format(currentDate, 'MMM')} as {statusMode === 'notsure' ? 'CLEAR' : statusMode.toUpperCase()}
+                  </button>
+                </div>
+
               </div>
             </div>
           </div>
@@ -286,8 +325,6 @@ export default function UltimateCalendarApp() {
           )}
 
           <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-stretch">
-            
-            {/* Top Options Box */}
             <div className="flex-1 bg-slate-900 p-5 md:p-6 rounded-[2rem] md:rounded-[2.5rem] text-white shadow-2xl flex flex-col h-56 md:h-64 border border-slate-700">
               <h2 className="text-emerald-400 font-bold text-[10px] md:text-xs uppercase tracking-[0.3em] mb-3 md:mb-4 flex items-center gap-2">
                 <Sparkles size={14} /> Top Options in {format(currentDate, 'yyyy')}
@@ -316,7 +353,6 @@ export default function UltimateCalendarApp() {
               </div>
             </div>
 
-            {/* Yearly Density Box */}
             <div className="bg-white p-5 md:p-6 rounded-[2rem] md:rounded-[2.5rem] shadow-lg border border-white flex flex-col justify-between">
                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 md:mb-4 flex items-center gap-2"><LayoutDashboard size={14}/> Yearly Density</h3>
                <div className="grid grid-cols-6 md:grid-cols-4 gap-1.5 md:gap-2">
@@ -334,7 +370,6 @@ export default function UltimateCalendarApp() {
             </div>
           </div>
 
-          {/* MAIN CALENDAR */}
           <div className="bg-white p-4 sm:p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl shadow-slate-200 border border-white">
             <div className="flex items-center justify-between mb-6 md:mb-12">
               <div className="flex items-baseline gap-2 md:gap-4">
