@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
 import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Sparkles, CalendarDays, UserPlus, Trash2, LayoutDashboard, RotateCcw, Share2, CircleDashed, Trophy, ArrowRightCircle, Loader2, PaintBucket } from 'lucide-react';
-import LZString from 'lz-string'; // 🚀 เพิ่มตัวบีบอัดข้อมูล!
+import LZString from 'lz-string';
 
 export default function UltimateCalendarApp() {
   const [isMounted, setIsMounted] = useState(false);
@@ -21,12 +21,12 @@ export default function UltimateCalendarApp() {
   const [scheduleData, setScheduleData] = useState<any>({});
   const [isDragging, setIsDragging] = useState(false);
 
-  // --- 💾 1. Load Data (รองรับทั้งแบบบีบอัดใหม่ และแบบเก่า) ---
+  // --- 💾 1. Load Data ---
   useEffect(() => {
     setIsMounted(true);
     const urlParams = new URLSearchParams(window.location.search);
     const shareData = urlParams.get('v');
-    const compressedData = urlParams.get('c'); // 🚀 เช็กว่าเป็นลิงก์แบบบีบอัดไหม
+    const compressedData = urlParams.get('c'); 
 
     if (compressedData) {
       try {
@@ -65,12 +65,11 @@ export default function UltimateCalendarApp() {
     }
   }, [scheduleData, members, isMounted, isViewerMode]);
 
-  // --- 🔗 3. Share Link (บีบอัดแบบขั้นสุด!) ---
+  // --- 🔗 3. Share Link ---
   const generateShareLink = async () => {
     setIsSharing(true);
     try {
       const payload = JSON.stringify({ m: members, s: scheduleData });
-      // 🚀 บีบอัดข้อมูลด้วย LZString ก่อนส่ง
       const compressed = LZString.compressToEncodedURIComponent(payload);
       const longUrl = `${window.location.origin}?c=${compressed}`; 
 
@@ -130,7 +129,6 @@ export default function UltimateCalendarApp() {
     });
   };
 
-  // 🚀 Auto-Fill Month
   const fillEntireMonth = () => {
     if (isViewerMode) return;
     const monthName = format(currentDate, 'MMMM');
@@ -285,8 +283,8 @@ export default function UltimateCalendarApp() {
               <h2 className="text-emerald-400 font-bold text-[10px] md:text-xs uppercase tracking-[0.3em] mb-3 md:mb-4 flex items-center gap-2"><Sparkles size={14} /> Top Options in {format(currentDate, 'yyyy')}</h2>
               <div className="overflow-y-auto pr-1 md:pr-2 space-y-2 custom-scrollbar">
                 {allValidRanges.length > 0 ? allValidRanges.map((r, idx) => (
-                  <div key={idx} onClick={() => setCurrentDate(r.startDate)} className={`flex justify-between items-center cursor-pointer group transition-all duration-300 rounded-xl md:rounded-2xl px-3 md:px-4 py-2 md:py-3 ${idx === 0 ? 'bg-white/10 scale-[1.02] border border-white/20' : 'hover:bg-white/5 border-b border-white/5'}`}>
-                    <div className="flex items-center gap-2 md:gap-3">
+                  <div key={idx} onClick={() => setCurrentDate(r.startDate)} className={`flex justify-between items-center cursor-pointer transition-all duration-300 rounded-xl md:rounded-2xl px-3 md:px-4 py-2 md:py-3 ${idx === 0 ? 'bg-white/10 scale-[1.02] border border-white/20' : 'hover:bg-white/5 border-b border-white/5'}`}>
+                    <div className="flex items-center gap-2 md:gap-3 group-hover:text-emerald-400">
                       {idx === 0 ? <Trophy size={16} className="text-yellow-400" /> : <ArrowRightCircle size={14} className="text-slate-600 group-hover:text-emerald-400" />}
                       <span className={`text-base md:text-xl font-black ${idx === 0 ? 'text-yellow-400' : 'text-slate-200 group-hover:text-white'}`}>{r.range}</span>
                     </div>
@@ -323,17 +321,56 @@ export default function UltimateCalendarApp() {
               {daysInMonth.map(day => {
                 const dateKey = format(day, 'yyyy-MM-dd');
                 const dayData = scheduleData[dateKey] || {};
-                const availableCount = Object.values(dayData).filter(s => s === 'available').length;
-                const busyCount = Object.values(dayData).filter(s => s === 'busy').length;
-                const isEveryone = availableCount === members.length && members.length > 0;
-                let cellBg = isEveryone ? 'bg-gradient-to-br from-yellow-300 to-amber-500 border-yellow-400' : availableCount > 0 ? 'bg-emerald-50 border-emerald-100' : busyCount > 0 ? 'bg-rose-50 border-rose-100' : 'bg-white border-slate-50';
+                const availableMembers = members.filter(m => dayData[m.id] === 'available');
+                const busyMembers = members.filter(m => dayData[m.id] === 'busy');
+                const isEveryone = availableMembers.length === members.length && members.length > 0;
+                let cellBg = isEveryone ? 'bg-gradient-to-br from-yellow-300 to-amber-500 border-yellow-400' : availableMembers.length > 0 ? 'bg-emerald-50 border-emerald-100' : busyMembers.length > 0 ? 'bg-rose-50 border-rose-100' : 'bg-white border-slate-50';
+                
                 return (
-                  <div key={dateKey} onMouseDown={() => { if(!isViewerMode) { setIsDragging(true); applyStatus(dateKey); } }} onMouseEnter={() => { if(!isViewerMode && isDragging) applyStatus(dateKey); }} className={`h-16 sm:h-24 md:h-32 lg:h-40 p-1 sm:p-2 md:p-4 rounded-xl md:rounded-[2rem] transition-all border-2 relative overflow-hidden flex flex-col justify-start md:justify-between group ${isViewerMode ? 'cursor-default' : 'cursor-pointer'} ${cellBg}`}>
-                    <span className={`text-sm sm:text-lg md:text-2xl font-black ${isEveryone ? 'text-white' : availableCount > 0 ? 'text-emerald-700' : busyCount > 0 ? 'text-rose-400' : 'text-slate-300'}`}>{format(day, 'd')}</span>
+                  // เอา overflow-hidden ออกไป เพื่อให้ Tooltip ลอยออกมาได้
+                  <div 
+                    key={dateKey} 
+                    onMouseDown={() => { if(!isViewerMode) { setIsDragging(true); applyStatus(dateKey); } }} 
+                    onMouseEnter={() => { if(!isViewerMode && isDragging) applyStatus(dateKey); }} 
+                    className={`h-16 sm:h-24 md:h-32 lg:h-40 p-1 sm:p-2 md:p-4 rounded-xl md:rounded-[2rem] transition-all border-2 relative flex flex-col justify-start md:justify-between group ${isViewerMode ? 'cursor-default' : 'cursor-pointer'} ${cellBg}`}
+                  >
+                    <span className={`text-sm sm:text-lg md:text-2xl font-black ${isEveryone ? 'text-white' : availableMembers.length > 0 ? 'text-emerald-700' : busyMembers.length > 0 ? 'text-rose-400' : 'text-slate-300'}`}>{format(day, 'd')}</span>
+                    
                     <div className="flex flex-wrap justify-center md:justify-start gap-0.5 md:gap-1 mt-1 md:mt-0">
                       {members.map(m => dayData[m.id] && <div key={m.id} className={`w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-md md:rounded-lg flex items-center justify-center text-[5px] sm:text-[8px] font-black text-white shadow-sm ${dayData[m.id] === 'available' ? 'bg-emerald-500' : 'bg-rose-500'}`}>{m.short}</div>)}
                     </div>
+                    
                     {isEveryone && <Sparkles className="absolute top-1 right-1 text-white animate-pulse w-3 h-3 md:w-4 md:h-4" />}
+
+                    {/* 🚀 Tooltip (Hover เพื่อดูรายละเอียด) */}
+                    <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 sm:w-56 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl p-3 md:p-4 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 shadow-2xl border border-white/10 hidden lg:block scale-95 group-hover:scale-100">
+                      <div className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 text-center">
+                        {format(day, 'dd MMMM yyyy')}
+                      </div>
+                      <div className="space-y-3">
+                        {availableMembers.length > 0 && (
+                          <div>
+                            <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1"><CheckCircle2 size={10} className="text-emerald-400"/> Available:</span>
+                            <div className="text-sm font-medium text-emerald-300 mt-1 leading-tight">
+                              {availableMembers.map(m => m.name).join(', ')}
+                            </div>
+                          </div>
+                        )}
+                        {busyMembers.length > 0 && (
+                          <div>
+                            <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1"><XCircle size={10} className="text-rose-400"/> Busy:</span>
+                            <div className="text-sm font-medium text-rose-300 mt-1 leading-tight">
+                              {busyMembers.map(m => m.name).join(', ')}
+                            </div>
+                          </div>
+                        )}
+                        {Object.keys(dayData).length === 0 && (
+                          <div className="text-xs text-slate-500 italic text-center py-2">No status recorded</div>
+                        )}
+                      </div>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95" />
+                    </div>
+
                   </div>
                 );
               })}
