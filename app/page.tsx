@@ -10,9 +10,9 @@ export default function UltimateCalendarApp() {
   const [isViewerMode, setIsViewerMode] = useState(false);
   const [isSharing, setIsSharing] = useState(false); 
 
-  // --- 📱 โหมดการแตะบนมือถือ (Paint = ทาสี, Inspect = ดูข้อมูล) ---
+  // --- 📱 โหมดการทำงาน (Paint = ทาสี, Inspect = ดูข้อมูล/มือถือ) ---
   const [interactionMode, setInteractionMode] = useState<'paint' | 'inspect'>('paint');
-  const [inspectDate, setInspectDate] = useState<Date | null>(null); // สำหรับเปิด Pop-up
+  const [inspectDate, setInspectDate] = useState<Date | null>(null);
 
   const [members, setMembers] = useState([
     { id: 1, name: 'John Doe', short: 'JO' },
@@ -25,7 +25,7 @@ export default function UltimateCalendarApp() {
   const [scheduleData, setScheduleData] = useState<any>({});
   const [isDragging, setIsDragging] = useState(false);
 
-  // --- 💾 Load Data ---
+  // --- 💾 1. Load Data ---
   useEffect(() => {
     setIsMounted(true);
     const urlParams = new URLSearchParams(window.location.search);
@@ -40,7 +40,7 @@ export default function UltimateCalendarApp() {
             setMembers(decoded.m || []);
             setScheduleData(decoded.s || {});
             setIsViewerMode(true); 
-            setInteractionMode('inspect'); // โหมดแชร์บังคับดูข้อมูล
+            setInteractionMode('inspect');
         }
       } catch (e) { console.error("Invalid Compressed Link"); }
     } else if (shareData) {
@@ -63,7 +63,7 @@ export default function UltimateCalendarApp() {
     }
   }, []);
 
-  // --- 💾 Auto-Save ---
+  // --- 💾 2. Auto-Save ---
   useEffect(() => {
     if (isMounted && !isViewerMode) {
       localStorage.setItem('tripSchedule', JSON.stringify(scheduleData));
@@ -71,7 +71,7 @@ export default function UltimateCalendarApp() {
     }
   }, [scheduleData, members, isMounted, isViewerMode]);
 
-  // --- 🔗 Share Link ---
+  // --- 🔗 3. Share Link ---
   const generateShareLink = async () => {
     setIsSharing(true);
     try {
@@ -106,7 +106,7 @@ export default function UltimateCalendarApp() {
     }
   };
 
-  // --- 👥 Member Management ---
+  // --- 👥 4. Member Management ---
   const addMember = () => {
     if (!newMemberName.trim()) return;
     const newM = { id: Date.now(), name: newMemberName, short: newMemberName.substring(0, 2).toUpperCase() };
@@ -121,7 +121,7 @@ export default function UltimateCalendarApp() {
     if (selectedMember?.id === id) setSelectedMember(updated[0]);
   };
 
-  // --- 🖌️ Paint System ---
+  // --- 🖌️ 5. Paint System ---
   const applyStatus = (dateKey: string) => {
     if (isViewerMode || interactionMode === 'inspect') return; 
     setScheduleData((prev: any) => {
@@ -161,6 +161,7 @@ export default function UltimateCalendarApp() {
     return () => window.removeEventListener('mouseup', handleMouseUp);
   }, []);
 
+  // --- 📊 6. Yearly Vibe ---
   const monthsOverview = useMemo(() => {
     const yearStart = startOfYear(currentDate);
     const months = eachMonthOfInterval({ start: yearStart, end: addMonths(yearStart, 11) });
@@ -195,6 +196,7 @@ export default function UltimateCalendarApp() {
     });
   }, [scheduleData, members, currentDate]);
 
+  // --- 🌍 7. Global Smart Ranking ---
   const allValidRanges = useMemo(() => {
     const yearStart = startOfYear(currentDate);
     const yearEnd = endOfYear(currentDate);
@@ -239,17 +241,17 @@ export default function UltimateCalendarApp() {
                 <CalendarDays className="text-slate-900 w-5 h-5 md:w-6 md:h-6" /> Admin
               </h1>
               
-              {/* 📱 ปุ่มสลับโหมด ทาสี / ดูข้อมูล */}
+              {/* 📱 ปุ่มสลับโหมด ทาสี / ดูข้อมูล (มีประโยชน์มากบนมือถือ) */}
               <div className="mb-6 flex bg-slate-100 p-1 rounded-xl">
                 <button 
                   onClick={() => setInteractionMode('paint')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${interactionMode === 'paint' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400'}`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${interactionMode === 'paint' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   <PenTool size={14} /> Paint
                 </button>
                 <button 
                   onClick={() => setInteractionMode('inspect')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${interactionMode === 'inspect' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${interactionMode === 'inspect' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   <Eye size={14} /> Inspect
                 </button>
@@ -303,7 +305,7 @@ export default function UltimateCalendarApp() {
         )}
 
         <div className={isViewerMode ? "lg:col-span-12 space-y-4 md:space-y-6 max-w-5xl mx-auto w-full" : "lg:col-span-9 space-y-4 md:space-y-6"}>
-          {isViewerMode && <div className="bg-emerald-100 text-emerald-800 p-3 md:p-4 rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm border border-emerald-200 text-sm md:text-base text-center"><Eye size={18} /> Read-Only Mode (Tap day to view)</div>}
+          {isViewerMode && <div className="bg-emerald-100 text-emerald-800 p-3 md:p-4 rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm border border-emerald-200 text-sm md:text-base text-center"><Eye size={18} /> Read-Only Mode (Tap day to view details)</div>}
           
           <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-stretch">
             <div className="flex-1 bg-slate-900 p-5 md:p-6 rounded-[2rem] md:rounded-[2.5rem] text-white shadow-2xl flex flex-col h-56 md:h-64 border border-slate-700">
@@ -346,7 +348,7 @@ export default function UltimateCalendarApp() {
 
             <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-4">
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={i} className="text-center text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 md:mb-4">{d}</div>)}
-              {Array.from({ length: getDay(startOfMonth(currentDate)) }).map((_, i) => <div key={i} className="h-16 sm:h-24 md:h-32 lg:h-40 pointer-events-none" />)}
+              {Array.from({ length: getDay(startOfMonth(currentDate)) }).map((_, i) => <div key={i} className="h-16 sm:h-24 md:h-32 lg:h-36 pointer-events-none" />)}
               
               {daysInMonth.map(day => {
                 const dateKey = format(day, 'yyyy-MM-dd');
@@ -356,9 +358,9 @@ export default function UltimateCalendarApp() {
                 const isEveryone = availableMembers.length === members.length && members.length > 0;
                 let cellBg = isEveryone ? 'bg-gradient-to-br from-yellow-300 to-amber-500 border-yellow-400' : availableMembers.length > 0 ? 'bg-emerald-50 border-emerald-100' : busyMembers.length > 0 ? 'bg-rose-50 border-rose-100' : 'bg-white border-slate-50';
                 
-                // 🚀 ย่อรายชื่อเพื่อป้องกันกล่องพัง
+                // 🚀 ล็อกจำนวน Avatar สูงสุด ป้องกันเลย์เอาต์พังบนมือถือ
                 const MAX_AVATARS = 3; 
-                const displayMembers = members.filter(m => dayData[m.id]); // คนที่มี status วันนั้น
+                const displayMembers = members.filter(m => dayData[m.id]); 
                 const showMembers = displayMembers.slice(0, MAX_AVATARS);
                 const hiddenCount = displayMembers.length - MAX_AVATARS;
 
@@ -374,30 +376,57 @@ export default function UltimateCalendarApp() {
                       if(!isViewerMode && interactionMode === 'paint' && isDragging) applyStatus(dateKey); 
                     }}
                     onClick={() => {
-                      // กดเพื่อเปิดรายละเอียด (ในโหมด Inspect หรือ Viewer)
-                      if (isViewerMode || interactionMode === 'inspect') {
-                        setInspectDate(day);
-                      }
+                      if (isViewerMode || interactionMode === 'inspect') setInspectDate(day);
                     }}
-                    className={`h-16 sm:h-24 md:h-32 lg:h-40 p-1 sm:p-2 md:p-4 rounded-xl md:rounded-[2rem] transition-all border-2 relative overflow-hidden flex flex-col justify-start md:justify-between select-none ${interactionMode === 'paint' && !isViewerMode ? 'cursor-cell' : 'cursor-pointer'} ${cellBg}`}
+                    // สังเกตว่าเอา overflow-hidden ออก เพื่อให้ Tooltip ลอยออกมาได้
+                    className={`h-16 sm:h-24 md:h-32 lg:h-36 p-1 sm:p-2 md:p-3 rounded-lg md:rounded-3xl transition-all border-2 relative flex flex-col justify-start group ${interactionMode === 'paint' && !isViewerMode ? 'cursor-cell' : 'cursor-pointer'} ${cellBg}`}
                   >
-                    <span className={`text-sm sm:text-lg md:text-2xl font-black ${isEveryone ? 'text-white' : availableMembers.length > 0 ? 'text-emerald-700' : busyMembers.length > 0 ? 'text-rose-400' : 'text-slate-300'}`}>{format(day, 'd')}</span>
+                    <span className={`text-sm sm:text-lg md:text-2xl font-black leading-none mb-1 md:mb-2 ${isEveryone ? 'text-white' : availableMembers.length > 0 ? 'text-emerald-700' : busyMembers.length > 0 ? 'text-rose-400' : 'text-slate-300'}`}>{format(day, 'd')}</span>
                     
-                    <div className="flex flex-wrap justify-center md:justify-start gap-0.5 md:gap-1 mt-1 md:mt-0">
+                    <div className="flex flex-wrap justify-start gap-1">
                       {showMembers.map(m => (
-                        <div key={m.id} className={`w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-md md:rounded-lg flex items-center justify-center text-[5px] sm:text-[8px] font-black text-white shadow-sm ${dayData[m.id] === 'available' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                        <div key={m.id} className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-md flex items-center justify-center text-[7px] sm:text-[8px] font-black text-white shadow-sm ${dayData[m.id] === 'available' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
                           {m.short}
                         </div>
                       ))}
                       {/* ไอคอน +N กรณียาวเกิน */}
                       {hiddenCount > 0 && (
-                        <div className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-md md:rounded-lg flex items-center justify-center text-[5px] sm:text-[8px] font-black bg-white/50 text-slate-700 shadow-sm backdrop-blur-sm">
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-md flex items-center justify-center text-[7px] sm:text-[8px] font-black bg-white/60 text-slate-700 shadow-sm backdrop-blur-sm">
                           +{hiddenCount}
                         </div>
                       )}
                     </div>
                     
                     {isEveryone && <Sparkles className="absolute top-1 right-1 text-white animate-pulse w-3 h-3 md:w-4 md:h-4" />}
+
+                    {/* 🚀 Tooltip (Desktop Only: โชว์เฉพาะจอใหญ่ และเมื่อเอาเมาส์ชี้) */}
+                    <div className="hidden lg:block absolute z-50 bottom-[105%] left-1/2 -translate-x-1/2 w-48 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl p-4 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 shadow-2xl border border-white/10 scale-95 group-hover:scale-100">
+                      <div className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-3 border-b border-white/10 pb-2 text-center">
+                        {format(day, 'dd MMM yyyy')}
+                      </div>
+                      <div className="space-y-3">
+                        {availableMembers.length > 0 && (
+                          <div>
+                            <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1"><CheckCircle2 size={10} className="text-emerald-400"/> Available:</span>
+                            <div className="text-sm font-medium text-emerald-300 mt-1 leading-tight">
+                              {availableMembers.map(m => m.name).join(', ')}
+                            </div>
+                          </div>
+                        )}
+                        {busyMembers.length > 0 && (
+                          <div>
+                            <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1"><XCircle size={10} className="text-rose-400"/> Busy:</span>
+                            <div className="text-sm font-medium text-rose-300 mt-1 leading-tight">
+                              {busyMembers.map(m => m.name).join(', ')}
+                            </div>
+                          </div>
+                        )}
+                        {Object.keys(dayData).length === 0 && (
+                          <div className="text-xs text-slate-500 italic text-center py-2">No data</div>
+                        )}
+                      </div>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95" />
+                    </div>
                   </div>
                 );
               })}
@@ -406,15 +435,15 @@ export default function UltimateCalendarApp() {
         </div>
       </div>
 
-      {/* 🚀 Modal Pop-up: เด้งขึ้นมาเมื่อกดดูวันที่ (รองรับมือถือ 100%) */}
+      {/* 🚀 Modal Pop-up (Mobile & All Devices): เด้งขึ้นมาเมื่อกดในโหมด Inspect */}
       {inspectDate && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => setInspectDate(null)} // กดพื้นหลังเพื่อปิด
+          onClick={() => setInspectDate(null)}
         >
           <div 
             className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-200"
-            onClick={e => e.stopPropagation()} // ป้องกันไม่ให้ทะลุไปปิด
+            onClick={e => e.stopPropagation()}
           >
             <button 
               onClick={() => setInspectDate(null)}
@@ -424,7 +453,7 @@ export default function UltimateCalendarApp() {
             </button>
 
             <h3 className="text-xl font-black text-slate-800 mb-1">{format(inspectDate, 'dd MMMM yyyy')}</h3>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">Daily Roster</p>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">Daily Status</p>
 
             <div className="space-y-4">
               {/* รายการคนว่าง */}
@@ -459,7 +488,7 @@ export default function UltimateCalendarApp() {
                 </div>
               )}
 
-              {/* ถ้าไม่มีใครลงข้อมูลเลย */}
+              {/* ถ้าไม่มีข้อมูล */}
               {Object.keys(scheduleData[format(inspectDate, 'yyyy-MM-dd')] || {}).length === 0 && (
                 <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
                   <CircleDashed size={24} className="mx-auto mb-2 opacity-50" />
